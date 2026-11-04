@@ -1,6 +1,15 @@
 import pytest
 from model import Question
 
+@pytest.fixture
+def question_with_multiple_choices():
+    question = Question(title='q1', max_selections=3)
+
+    question.add_choice('a', True)
+    question.add_choice('b', False)
+    question.add_choice('c', True)
+
+    return question
 
 def test_create_question():
     question = Question(title='q1')
@@ -136,3 +145,23 @@ def test_add_choice_with_empty_text():
 
     with pytest.raises(Exception):
         question.add_choice('')
+
+# commit 3
+
+def test_correct_selected_choices_preserves_selection_order(question_with_multiple_choices):
+    question = question_with_multiple_choices
+    choice1, choice2, choice3 = question.choices
+
+    result = question.correct_selected_choices([choice3.id, choice2.id, choice1.id])
+
+    assert result == [choice3.id, choice1.id]
+
+def test_removed_correct_choice_is_not_returned_as_correct(question_with_multiple_choices):
+    question = question_with_multiple_choices
+    choice1, choice2, choice3 = question.choices
+
+    question.remove_choice_by_id(choice1.id)
+
+    result = question.correct_selected_choices([choice1.id, choice2.id, choice3.id])
+
+    assert result == [choice3.id]
